@@ -29,7 +29,7 @@ def process_single_pdf(fname: str, out_folder: str, model_refs, metadata: Option
         # Usually these files are not recent/high-quality
         if min_length:
             length = get_length_of_text(fname)
-            if length < min_length:
+            if length < min_length or length / os.path.get_size(fname) < 0.05 :
                 return
 
         full_text, out_metadata = convert_single_pdf(fname, model_refs, metadata=metadata)
