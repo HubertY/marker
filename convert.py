@@ -17,7 +17,7 @@ configure_logging()
 
 
 @ray.remote(num_cpus=settings.RAY_CORES_PER_WORKER, num_gpus=.05 if settings.CUDA else 0)
-def process_single_pdf(fname: str, out_folder: str, model_refs, metadata: Optional[Dict] = None, min_length: Optional[int] = None):
+def process_single_pdf(fname: str, in_folder: str, out_folder: str, model_refs, metadata: Optional[Dict] = None, min_length: Optional[int] = None):
     out_filename = fname.rsplit(".", 1)[0] + ".md"
     out_filename = os.path.join(out_folder, os.path.basename(out_filename))
     out_meta_filename = out_filename.rsplit(".", 1)[0] + "_meta.json"
@@ -29,7 +29,7 @@ def process_single_pdf(fname: str, out_folder: str, model_refs, metadata: Option
         # Usually these files are not recent/high-quality
         if min_length:
             length = get_length_of_text(fname)
-            if length < min_length or length / os.path.get_size(fname) < 0.05 :
+            if length < min_length or length / os.path.get_size(os.path.join(in_folder, fname)) < 0.05 :
                 return
 
         full_text, out_metadata = convert_single_pdf(fname, model_refs, metadata=metadata)
@@ -100,6 +100,7 @@ def main():
     futures = [
         process_single_pdf.options(num_gpus=gpu_frac).remote(
             filename,
+            in_folder,
             out_folder,
             model_refs,
             metadata=metadata.get(os.path.basename(filename)),
